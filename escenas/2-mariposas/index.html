@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mariposas para Mabel</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div id="app">
+  <div id="hero">
+    <h1><span>🦋</span><br /><b id="nombre">Mabel</b></h1>
+    <p id="frase"></p>
+    <h6>toca y arrastra: las mariposas te siguen</h6>
+  </div>
+</div>
+
+<script>
+
+const frases = [
+  "Desde que llegaste a mi vida,",
+  "siento mariposas cada vez que te veo…",
+  "y hoy quise que las vieras tú también."
+];
+const f = document.getElementById('frase');
+let i = 0;
+function siguiente(){
+  if(i >= frases.length){ try{parent.postMessage({tipo:'listo'},'*')}catch(e){} return; }
+  f.style.opacity = 0;
+  setTimeout(()=>{ f.textContent = frases[i++]; f.style.opacity = 1; setTimeout(siguiente, 3200); }, 600);
+}
+setTimeout(siguiente, 1500);
+</script>
+
+<script type="module">
+
+const URL_LIB = 'https://unpkg.com/threejs-toys@0.0.8/build/threejs-toys.module.cdn.min.js';
+try {
+  const { butterfliesBackground } = await import(URL_LIB);
+  butterfliesBackground({
+    el: document.getElementById('app'),
+    eventsEl: document.body,
+    gpgpuSize: 18,
+    background: 0x88CEFF,
+    material: 'phong',
+    lights: [
+      { type: 'ambient', params: [0xffffff, 0.5] },
+      { type: 'directional', params: [0xffffff, 1], props: { position: [10, 0, 0] } }
+    ],
+    materialParams: { transparent: true, alphaTest: 0.5 },
+    texture: 'https://assets.codepen.io/33787/butterflies.png',
+    textureCount: 4,
+    wingsScale: [2, 2, 2],
+    wingsWidthSegments: 16,
+    wingsHeightSegments: 16,
+    wingsSpeed: 0.75,
+    wingsDisplacementScale: 1.25,
+    noiseCoordScale: 0.01,
+    noiseTimeCoef: 0.0005,
+    noiseIntensity: 0.0025,
+    attractionRadius1: 100,
+    attractionRadius2: 150,
+    maxVelocity: 0.1
+  });
+} catch (e) {
+  console.warn('Sin internet: mariposas de respaldo', e);
+  document.body.classList.add('respaldo');
+  const c = document.createElement('canvas'); c.id = 'bf';
+  document.getElementById('app').appendChild(c);
+  const x = c.getContext('2d');
+  const fit = () => { c.width = innerWidth; c.height = innerHeight; }; fit(); addEventListener('resize', fit);
+  const N = 28, bs = Array.from({length:N}, () => ({
+    x:Math.random()*innerWidth, y:Math.random()*innerHeight, s:18+Math.random()*30,
+    a:Math.random()*6.28, v:.4+Math.random()*.9, p:Math.random()*6.28
+  }));
+  let mx = innerWidth/2, my = innerHeight/2;
+  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; });
+  (function loop(t){
+    x.clearRect(0,0,c.width,c.height);
+    for (const b of bs){
+      b.a += (Math.random()-.5)*.15;
+      const dx = mx-b.x, dy = my-b.y, d = Math.hypot(dx,dy)||1;
+      b.x += Math.cos(b.a)*b.v + dx/d*.35; b.y += Math.sin(b.a)*b.v + dy/d*.35;
+      if (b.x<-40) b.x=c.width+40; if (b.x>c.width+40) b.x=-40;
+      if (b.y<-40) b.y=c.height+40; if (b.y>c.height+40) b.y=-40;
+      x.save(); x.translate(b.x,b.y); x.scale(.6+.4*Math.sin(t/110+b.p),1);
+      x.font = b.s+'px serif'; x.textAlign='center'; x.fillText('🦋',0,0); x.restore();
+    }
+    requestAnimationFrame(loop);
+  })(0);
+}
+</script>
+</body>
+</html>

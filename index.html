@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Para Mabel 💗</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georgia,"Times New Roman",serif}
+  .escena{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000;opacity:0;transition:opacity 1.2s ease}
+  .escena.vista{opacity:1}
+
+  #puente{position:fixed;inset:0;z-index:30;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+          padding:24px;text-align:center;color:#ffd1dc;opacity:0;pointer-events:none;transition:opacity .9s ease}
+  #puente.on{opacity:1;pointer-events:auto}
+  #puente p{margin:0;opacity:0;transform:translateY(12px);transition:opacity 1s ease,transform 1s ease}
+  #puente p.on{opacity:1;transform:none}
+  #p1{font-size:clamp(1.1rem,4.4vw,1.6rem);font-style:italic}
+  #p2{font-size:clamp(1.6rem,7vw,2.6rem);font-weight:700;color:#ff7aa8;text-shadow:0 0 18px rgba(255,122,168,.6)}
+  .vuelan{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .vuelan i{position:absolute;bottom:-12%;font-style:normal;opacity:0;animation:sube linear forwards}
+  @keyframes sube{0%{opacity:0;transform:translate(0,0) rotate(-10deg)}15%{opacity:.9}
+    50%{transform:translate(var(--dx),-55vh) rotate(12deg)}100%{opacity:0;transform:translate(calc(var(--dx)*-.6),-120vh) rotate(-8deg)}}
+
+  #sig{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:20;
+       background:rgba(0,0,0,.55);color:#ffd1dc;border:1px solid #ffd1dc;border-radius:999px;padding:11px 26px;
+       font:inherit;font-size:1rem;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .8s,transform .8s;
+       backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 0 18px rgba(255,209,220,.3)}
+  #sig.on{opacity:1;transform:translate(-50%,0);pointer-events:auto;animation:late 1.6s ease-in-out infinite}
+  #sig:active{filter:brightness(1.2)}
+  @keyframes late{50%{box-shadow:0 0 28px rgba(255,122,168,.75)}}
+</style>
+</head>
+<body>
+
+<div id="puente">
+  <div class="vuelan" id="vuelan"></div>
+  <p id="p1"></p>
+  <p id="p2"></p>
+</div>
+<button id="sig" type="button"></button>
+
+<script>
+const ESCENAS = [
+  { src: 'escenas/1-inicio/index.html' },
+  { src: 'escenas/2-mariposas/index.html',
+    puente: ['Gracias por decir que sí, Mabel…', 'mira lo que causas en mí 🦋'],
+    boton: 'Sigue ✨' },
+  { src: 'escenas/3-corazones/index.html',
+    puente: ['Y esas mariposas…', 'se volvieron corazones 💗'],
+    boton: 'Sigue 💗' },
+  { src: 'escenas/4-tulipanes/index.html',
+    puente: ['Y como mereces todo lo bonito,', 'te traje tulipanes 🌷'],
+    boton: 'Una última cosa 🌷' }
+];
+const BOTON_SIGUIENTE = [ 'Hay algo más para ti 🦋', 'Sigue ✨', 'Sigue 💗' ];
+
+const puente = document.getElementById('puente');
+const p1 = document.getElementById('p1'), p2 = document.getElementById('p2');
+const sig = document.getElementById('sig'), vuelan = document.getElementById('vuelan');
+let actual = -1, frame = null, ocupado = false, pendiente = false;
+const espera = ms => new Promise(r => setTimeout(r, ms));
+
+function crearFrame(i){
+  const f = document.createElement('iframe');
+  f.className = 'escena';
+  f.src = ESCENAS[i].src;
+  f.setAttribute('allow', 'autoplay; fullscreen');
+  f.title = 'escena ' + (i + 1);
+  document.body.insertBefore(f, puente);
+  return f;
+}
+
+function esperarCarga(f){
+  return new Promise(r => { f.addEventListener('load', r, { once: true }); setTimeout(r, 6000); });
+}
+
+function llenarMariposas(emoji){
+  vuelan.innerHTML = '';
+  for (let k = 0; k < 16; k++){
+    const b = document.createElement('i');
+    b.textContent = emoji;
+    b.style.left = Math.random() * 100 + '%';
+    b.style.fontSize = (22 + Math.random() * 30) + 'px';
+    b.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
+    b.style.animationDuration = (3.5 + Math.random() * 3) + 's';
+    b.style.animationDelay = (Math.random() * 2.5) + 's';
+    vuelan.appendChild(b);
+  }
+}
+
+function mostrarBoton(){
+  if (actual < 0 || actual >= ESCENAS.length - 1) return;
+  sig.textContent = BOTON_SIGUIENTE[actual] || 'Sigue ✨';
+  sig.classList.add('on');
+}
+
+async function ir(i){
+  if (ocupado) return;
+  ocupado = true;
+  pendiente = false;
+  sig.classList.remove('on');
+  try {
+    const E = ESCENAS[i];
+    if (frame){
+      const emoji = i === 1 ? '🦋' : i === 2 ? '💗' : '🌷';
+      llenarMariposas(emoji);
+      p1.textContent = E.puente[0]; p2.textContent = E.puente[1];
+      puente.classList.add('on');
+      await espera(900);
+      p1.classList.add('on'); await espera(1500);
+      p2.classList.add('on'); await espera(2200);
+      const viejo = frame;
+      frame = crearFrame(i);
+      await esperarCarga(frame);
+      await espera(400);
+      viejo.remove();
+      puente.classList.remove('on');
+      frame.classList.add('vista');
+      await espera(1000);
+      p1.classList.remove('on'); p2.classList.remove('on'); vuelan.innerHTML = '';
+    } else {
+      frame = crearFrame(i);
+      await esperarCarga(frame);
+      frame.classList.add('vista');
+    }
+    actual = i;
+  } finally {
+    ocupado = false;
+  }
+  if (pendiente){ pendiente = false; mostrarBoton(); }
+}
+
+addEventListener('message', e => {
+  if (!frame || e.source !== frame.contentWindow) return;
+  const d = e.data || {};
+  if (d.tipo === 'listo'){
+    if (ocupado) pendiente = true; else mostrarBoton();
+  }
+  if (d.tipo === 'reiniciar') location.reload();
+});
+sig.addEventListener('click', () => { if (!ocupado && actual < ESCENAS.length - 1) ir(actual + 1); });
+
+ir(0);
+</script>
+</body>
+</html>
