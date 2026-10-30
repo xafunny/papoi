@@ -85,7 +85,7 @@ function mensajeFinal() {
   const box = document.getElementById('final');
   const linea = document.getElementById('finalLinea');
   const firma = document.getElementById('finalFirma');
-  const texto = 'Gracias por ser mi amor bonito, Eres mi tulipán favorito 🌷';
+  const texto = 'Gracias por si amor bonito, Eres mi tulipán favorito 🌷';
   box.classList.add('on');
   let i = 0;
   (function escribir() {

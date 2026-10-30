@@ -186,6 +186,7 @@ $('ok').onclick=()=>{
   show('s4');
   setTimeout(()=>{try{parent.postMessage({tipo:'listo'},'*')}catch(e){}},3500);
 };
+['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{try{parent.postMessage({tipo:'gesto'},'*')}catch(e){}},{passive:true}));
 </script>
 </body>
 </html>
